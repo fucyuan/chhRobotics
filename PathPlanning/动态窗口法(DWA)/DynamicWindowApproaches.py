@@ -389,7 +389,8 @@ def main(config):
         plt.gcf().canvas.mpl_connect(
             'key_release_event',
             lambda event: [exit(0) if event.key == 'escape' else None])
-        plt.plot(predicted_trajectory[:, 0], predicted_trajectory[:, 1], "-g")
+        plt.plot(trajectory[:, 0], trajectory[:, 1], "-g")
+        plt.plot(predicted_trajectory[:, 0], predicted_trajectory[:, 1], "--b")
         plt.plot(x[0], x[1], "xr")
         plt.plot(goal[0], goal[1], "xb")
         plt.plot(ob[:, 0], ob[:, 1], "ok")
