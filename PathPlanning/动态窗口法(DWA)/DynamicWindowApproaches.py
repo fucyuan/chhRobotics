@@ -36,23 +36,14 @@ class Config:
         
         self.judge_distance = 10 # 若与障碍物的最小距离大于阈值（例如这里设置的阈值为robot_radius+0.2）,则设为一个较大的常值
 
-        # 障碍物位置 [x(m) y(m), ....]
-        self.ob = np.array([[-1, -1],
-                    [0, 2],
-                    [4.0, 2.0],
-                    [5.0, 4.0],
-                    [5.0, 5.0],
-                    [5.0, 6.0],
-                    [5.0, 9.0],
-                    [8.0, 9.0],
-                    [7.0, 9.0],
-                    [8.0, 10.0],
-                    [9.0, 11.0],
-                    [12.0, 13.0],
-                    [12.0, 12.0],
-                    [15.0, 15.0],
-                    [13.0, 13.0]
-                    ])
+        num_obstacles = 25  # 障碍物数量
+        x_min, x_max = -5, 20  # x 坐标的范围
+        y_min, y_max = -5, 20  # y 坐标的范围
+
+        # 随机生成障碍物位置
+        self.ob = np.random.uniform(
+            low=[x_min, y_min], high=[x_max, y_max], size=(num_obstacles, 2)
+        )
         # 目标点位置
         self.target = np.array([10,10])
 
