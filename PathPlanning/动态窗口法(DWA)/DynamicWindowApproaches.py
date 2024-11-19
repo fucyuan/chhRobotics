@@ -199,21 +199,68 @@ class DWA:
         #         sum_heading +=heading_eval
 
         # 在速度空间中按照预先设定的分辨率采样
-        sum_heading,sum_dist,sum_vel = 1,1,1 # 不进行归一化
-        for v in np.arange(dynamic_window_vel[0],dynamic_window_vel[1],self.v_sample):
+        # sum_heading,sum_dist,sum_vel = 1,1,1 # 不进行归一化
+        # for v in np.arange(dynamic_window_vel[0],dynamic_window_vel[1],self.v_sample):
+        #     for w in np.arange(dynamic_window_vel[2], dynamic_window_vel[3], self.w_sample):
+
+        #         trajectory = self.trajectory_predict(state, v, w)  # 第2步--轨迹推算
+
+        #         heading_eval = self.alpha*self.__heading(trajectory,goal)/sum_heading
+        #         dist_eval = self.beta*self.__dist(trajectory,obstacle)/sum_dist
+        #         vel_eval = self.gamma*self.__velocity(trajectory)/sum_vel
+        #         G = heading_eval+dist_eval+vel_eval # 第3步--轨迹评价
+
+        #         if G_max<=G:
+        #             G_max = G
+        #             trajectory_opt = trajectory
+        #             control_opt = [v,w]
+
+        # 初始化归一化所需的最大值和最小值
+        heading_max, heading_min = -float('inf'), float('inf')
+        dist_max, dist_min = -float('inf'), float('inf')
+        vel_max, vel_min = -float('inf'), float('inf')
+
+        # 首先遍历动态窗口，计算每个指标的最大值和最小值
+        for v in np.arange(dynamic_window_vel[0], dynamic_window_vel[1], self.v_sample):
             for w in np.arange(dynamic_window_vel[2], dynamic_window_vel[3], self.w_sample):
+                trajectory = self.trajectory_predict(state, v, w)  # 轨迹推算
+                # 更新每个评价指标的最大值和最小值
+                heading_eval = self.__heading(trajectory, goal)
+                dist_eval = self.__dist(trajectory, obstacle)
+                vel_eval = self.__velocity(trajectory)
 
-                trajectory = self.trajectory_predict(state, v, w)  # 第2步--轨迹推算
+                heading_max = max(heading_max, heading_eval)
+                heading_min = min(heading_min, heading_eval)
+                dist_max = max(dist_max, dist_eval)
+                dist_min = min(dist_min, dist_eval)
+                vel_max = max(vel_max, vel_eval)
+                vel_min = min(vel_min, vel_eval)
 
-                heading_eval = self.alpha*self.__heading(trajectory,goal)/sum_heading
-                dist_eval = self.beta*self.__dist(trajectory,obstacle)/sum_dist
-                vel_eval = self.gamma*self.__velocity(trajectory)/sum_vel
-                G = heading_eval+dist_eval+vel_eval # 第3步--轨迹评价
+        # 归一化评价指标并计算综合得分
+        G_max = -float('inf')  # 初始化最大得分
+        trajectory_opt = None
+        control_opt = None
 
-                if G_max<=G:
+        for v in np.arange(dynamic_window_vel[0], dynamic_window_vel[1], self.v_sample):
+            for w in np.arange(dynamic_window_vel[2], dynamic_window_vel[3], self.w_sample):
+                trajectory = self.trajectory_predict(state, v, w)  # 轨迹推算
+
+                # 归一化计算
+                heading_eval = (self.__heading(trajectory, goal) - heading_min) / (heading_max - heading_min + 1e-6)
+                dist_eval = (self.__dist(trajectory, obstacle) - dist_min) / (dist_max - dist_min + 1e-6)
+                vel_eval = (self.__velocity(trajectory) - vel_min) / (vel_max - vel_min + 1e-6)
+
+                # 权重结合
+                G = self.alpha * heading_eval + self.beta * dist_eval + self.gamma * vel_eval
+
+                # 更新最优得分及对应的轨迹和控制指令
+                if G_max <= G:
                     G_max = G
                     trajectory_opt = trajectory
-                    control_opt = [v,w]
+                    control_opt = [v, w]
+
+        # return trajectory_opt, control_opt
+
 
         return control_opt, trajectory_opt
 
